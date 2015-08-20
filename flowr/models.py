@@ -155,7 +155,21 @@ class RuleStoreSet(TimeTrackedModel):
 
     def cytoscape_json(self):
         data = {
+            'nodes':[],
+            'edges':[],
         }
+        for rule_store in RuleStore.objects.filter(rule_store_set=self):
+            data['nodes'].append( { 'data':{ 'id':rule_store.name } } )
+            for child in rule_store.rule.children:
+                data['edges'].append( { 
+                    'data':{ 
+                        'id':'%s_%s' % (rule_store.name, child.__name__),
+                        'source':rule_store.name,
+                        'target':child.__name__,
+                    }
+                })
+
+
         return json.dumps(data)
 
 
@@ -244,6 +258,29 @@ class Flow(TimeTrackedModel):
     def in_use(self):
         state = State.objects.filter(flow=self).first()
         return bool(state)
+
+    def _depth_serialize(self, node, data):
+        n = { 'data':{ 'id':node.rule_store.name } }
+        if n not in data['nodes']:
+            data['nodes'].append(n)
+            for child in node.children.all():
+                data['edges'].append({ 
+                    'data':{ 
+                        'id':'%s_%s' % (node.rule_store.name,
+                            child.rule_store.name),
+                        'source':node.rule_store.name,
+                        'target':child.rule_store.name,
+                    }
+                })
+                self._depth_serialize(child, data)
+
+    def cytoscape_json(self):
+        data = {
+            'nodes':[],
+            'edges':[],
+        }
+        self._depth_serialize(self.start_node, data)
+        return json.dumps(data)
 
 
 class FlowNode(TimeTrackedModel):
