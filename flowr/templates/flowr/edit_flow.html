@@ -1,0 +1,11 @@
+{% extends "flowr/view_rules.html" %}
+
+{% block functions %}
+{% endblock functions %}
+
+{% block docready %}
+cy.on('tap', 'node', function(e) {
+  console.log('tapped:' + e.cyTarget.id());
+});
+
+{% endblock docready %}
