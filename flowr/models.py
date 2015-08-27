@@ -618,7 +618,7 @@ class Node(models.Model):
 
     def descendents_root(self):
         """Returns a list of descendents of this node, if the root node is in
-        the list (due to a cycle) it will be included bbut will not pass
+        the list (due to a cycle) it will be included but will not pass
         through it.  
         """
         visited = set([])
@@ -658,3 +658,27 @@ class Node(models.Model):
         self.parents.remove(self)
         self.delete()
         return data
+
+    def prune(self):
+        """Removes the node and all descendents without looping back past the
+        root.  Note this does not remove the associated DataNodes.
+
+        :returns: list of DataNode objects associated with the removed Nodes.
+        """
+        targets = self.descendents_root()
+        try:
+            targets.remove(self.graph.root)
+        except ValueError:
+            # root wasn't in the target list, no problem
+            pass
+
+        data_nodes = [n.data_node for n in targets]
+        data_nodes.append(self.data_node)
+        for node in targets:
+            node.delete()
+
+        for parent in self.parents.all():
+            parent.children.remove(self)
+
+        self.delete()
+        return data_nodes

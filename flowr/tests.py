@@ -425,14 +425,35 @@ class GraphTests(TestCase):
         expected = b.data_node
         result = b.remove()
         self.assertEqual(expected, result)
+        self.assertEqual(Node.objects.filter(graph=self.graph_c).count(), 8)
         self.assertEqual(set(a.descendents()), set([c, d, e, f, g, h, i]))
 
         expected = h.data_node
         result = h.remove()
         self.assertEqual(expected, result)
+        self.assertEqual(Node.objects.filter(graph=self.graph_c).count(), 7)
         self.assertEqual(set(a.descendents()), set([c, d, e, f, g, i]))
         self.assertEqual(i.children.count(), 0)
         self.assertEqual(set(d.descendents_root()), set([g, i]))
+
+    def test_prune(self):
+        a,b,c,d,e,f,g,h,i = self._c_graph_nodes()
+
+        # simple prune of childless node
+        expected = [b.data_node, ]
+        result = b.prune()
+        self.assertEqual(expected, result)
+        self.assertEqual(set(a.descendents()), set([c, d, e, f, g, h, i]))
+        self.assertEqual(a.children.count(), 1)
+        self.assertEqual(Node.objects.filter(graph=self.graph_c).count(), 8)
+
+        # more comples prune of node with children and cycles
+        expected = [d.data_node, g.data_node, h.data_node, i.data_node]
+        result = d.prune()
+        self.assertEqual(set(expected), set(result))
+        self.assertEqual(set(a.descendents()), set([c, e, f]))
+        self.assertEqual(c.children.count(), 1)
+        self.assertEqual(Node.objects.filter(graph=self.graph_c).count(), 4)
 
     def test_errors(self):
         # Check we can't connect nodes from different graphs
