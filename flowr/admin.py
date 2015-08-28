@@ -5,33 +5,73 @@ import logging
 from django.contrib import admin
 from django.core.urlresolvers import reverse
 
-from flowr.models import RuleStoreSet, RuleStore, Flow, FlowNode, State
+from flowr.models import DCCGraph, Node, RuleSet, Flow, FlowNodeData, State
 
 logger = logging.getLogger(__name__)
 
 # =============================================================================
-# Admin Classes
+# Graph Admin Classes
 # =============================================================================
 
-@admin.register(RuleStoreSet)
-class RuleStoreSetAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'self_rule_stores', 'self_flows',
+@admin.register(DCCGraph)
+class DCCGraphAdmin(admin.ModelAdmin):
+    list_display = ('id', 'self_model', 'self_root', 'self_num_nodes', 
+        'self_nodes')
+
+    def self_model(self, obj):
+        return '%s' % obj.data_content_type.model_class().__name__
+    self_model.short_description = 'Data Model'
+
+    def self_root(self, obj):
+        return '%s' % obj.root
+
+    def self_num_nodes(self, obj):
+        return Node.objects.filter(graph=obj).count()
+    self_num_nodes.short_description = '# Nodes'
+
+    def self_nodes(self, obj):
+        return ('<a href="/admin/flowr/node/?graph__id__exact=%s"'
+            '>Associated Nodes</a>') % obj.id
+    self_nodes.allow_tags = True
+    self_nodes.short_description = 'Associated Nodes'
+
+
+@admin.register(Node)
+class NodeAdmin(admin.ModelAdmin):
+    list_display = ('id', 'self_graph', 'self_parents', 'self_children', 
+        'self_is_root')
+
+    def self_graph(self, obj):
+        return '%s' % obj.graph
+
+    def self_parents(self, obj):
+        parents = [str(p) for p in obj.parents.all()]
+        return ', '.join(parents)
+
+    def self_children(self, obj):
+        children = [str(c) for c in obj.children.all()]
+        return ','.join(children)
+
+    def self_is_root(self, obj):
+        return obj.is_root()
+
+# =============================================================================
+# Flow Admin Classes
+# =============================================================================
+
+@admin.register(RuleSet)
+class RuleSetAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'root_rule_label', 'self_flows',
         'self_actions')
 
-    def self_rule_stores(self, obj):
-        return ('<a href="/admin/flowr/rulestore/?rule_store_set__id__exact=%s"'
-            '>Associated RuleStores</a>') % obj.id
-    self_rule_stores.allow_tags = True
-    self_rule_stores.short_description = 'Associated RuleStores'
-
     def self_flows(self, obj):
-        return ('<a href="/admin/flowr/flow/?rule_store_set__id__exact=%s"'
+        return ('<a href="/admin/flowr/flow/?rule_set__id__exact=%s"'
             '>Associated Flows</a>') % obj.id
     self_flows.allow_tags = True
     self_flows.short_description = 'Associated Flows'
 
     def self_actions(self, obj):
-        view = reverse('flowr-view-rule-store-set-tree', args=(obj.id,))
+        view = reverse('flowr-view-rule-set-tree', args=(obj.id,))
         flow = reverse('flowr-create-flow', args=(obj.id,))
         return ('<a href="%s">View Tree</a>&nbsp;|&nbsp;'
             '<a href="%s">New Flow</a>') % (view, flow)
@@ -39,25 +79,11 @@ class RuleStoreSetAdmin(admin.ModelAdmin):
     self_actions.short_description = 'Actions'
 
 
-@admin.register(RuleStore)
-class RuleStoreAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'rule_store_set', 'rule_class_name',
-        'starting')
-    list_filter = ('rule_store_set', 'starting')
-
-
 @admin.register(Flow)
 class FlowAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'rule_store_set', 'self_start_rule',
+    list_display = ('id', 'name', 'rule_set', 'state_graph', 'root_data', 
         'self_actions')
-    list_filter = ('rule_store_set', )
-
-    def self_start_rule(self, obj):
-        if obj.start_node:
-            return obj.start_node.rule_store.name
-        else:
-            return '<i>None</i>'
-    self_start_rule.allow_tags = True
+    list_filter = ('rule_set', )
 
     def self_actions(self, obj):
         flow = reverse('flowr-edit-flow', args=(obj.id,))
@@ -69,23 +95,22 @@ class FlowAdmin(admin.ModelAdmin):
     self_actions.short_description = 'Actions'
 
 
-@admin.register(FlowNode)
-class FlowNodeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'flow', 'rule_store', 'self_rule', 'self_children')
-    list_filter = ('flow', 'flow__rule_store_set', )
-
-    def self_rule(self, obj):
-        return obj.rule_store.rule.name
+@admin.register(FlowNodeData)
+class FlowNodeDataAdmin(admin.ModelAdmin):
+    list_display = ('id', 'rule_label', 'flow', 'self_children')
 
     def self_children(self, obj):
-        kids = [str(node.id) for node in obj.children.all()]
+        kids = [str(node.data.rule_name) for node in obj.node.children.all()]
         return ', '.join(kids)
 
 
 @admin.register(State)
 class StateAdmin(admin.ModelAdmin):
-    list_display = ('id', 'flow', 'self_rule_store_set', 'current_node')
-    list_filter = ('flow', 'flow__rule_store_set', )
+    list_display = ('id', 'flow', 'current_node', 'self_rule', 'self_rule_set')
+    list_filter = ('flow', 'flow__rule_set', )
 
-    def self_rule_store_set(self, obj):
-        return str(obj.flow.rule_store_set)
+    def self_rule_set(self, obj):
+        return str(obj.flow.rule_set)
+
+    def self_rule(self, obj):
+        return str(obj.current_node.data.rule.label)

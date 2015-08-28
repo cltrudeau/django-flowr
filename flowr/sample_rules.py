@@ -15,10 +15,6 @@ class LocalRule(Rule):
         done_leave.append(cls.__name__)
 
     @classmethod
-    def class_name(cls):
-        return '%s.%s' % (cls.__module__, cls.__name__)
-
-    @classmethod
     def display_name(cls):
         return cls.__name__
 
