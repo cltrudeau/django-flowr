@@ -1,0 +1,11 @@
+#header {
+  width:50%;
+}
+
+#title h1 {
+  display:inline;
+}
+
+#admin {
+  float: right;
+}

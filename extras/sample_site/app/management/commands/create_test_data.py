@@ -20,4 +20,4 @@ class Command(BaseCommand):
         node = root.add_child_rule(rules.C)
         node.add_child_rule(rules.D)
         node = node.add_child_rule(rules.E)
-        node.add_child_rule(rules.A)
+        node.connect_child(root)

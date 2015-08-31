@@ -1,88 +1,13 @@
-{% load staticfiles %}
-<!DOCTYPE html>
-<html>
-<head>
-  <script src="{% static 'flowr/jquery-1.11.3.min.js' %}"></script>
-  <script src="{% static 'flowr/cytoscape.min.js' %}"></script>
-  <style>
-    #header {
-      width:50%;
-    }
-    #title h1 {
-      display:inline;
-    }
-    #admin {
-      float: right;
-    }
-  </style>
-</head>
-<body>
-  <div id="header">
-    <span id="title">
-      <h1>{{title}}</h1>
-    </span>
-    <span id="admin">
-      <a href="/admin/flowr/">Return to admin</a>
-    </span>
-  </div>
+{% extends "flowr/base.html" %}
+
+{% block body %}
+  {% include "flowr/header.html" %}
   <div id="cy" style="height:500px; width:500px">
   </div>
+{% endblock body %}
 
+{% block body_post %}
 <script type="text/javascript">
-var cy;
-
-{% block functions %}
-{% endblock functions %}
-
-function updateBounds() {
-  var bounds = cy.elements().boundingBox();
-  $('#cy').css('height', bounds.h + 300);
-  cy.center();
-  cy.resize();
-}
-
-$(function() {
-  $('#cy').cytoscape({
-    panningEnabled: false,
-    zoomingEnabled: false,
-    style: [
-      {
-        selector: 'node',
-        css: {
-          'content': 'data(id)',
-          'text-valign': 'center',
-          'text-halign': 'center',
-        }
-      },
-      {
-        selector: 'edge',
-        css: {
-          'target-arrow-shape': 'triangle'
-        }
-      }
-    ],
-    elements: {{ graph | safe }},
-    layout: {
-      name: 'breadthfirst',
-      directed: true,
-      roots: {{ roots | safe}},
-      padding: 5
-    }
-  });
-
-  $(window).resize(function() {
-    updateBounds();
-  });
-
-  // get cytoscapes controller instance
-  cy = $('#cy').cytoscape('get');
-  cy.on('ready', function(e) {
-    updateBounds();
-  });
-
-  {% block docready %}
-  {% endblock docready %}
-});
+  {% include "flowr/graph.js" %}
 </script>
-</body>
-</html>
+{% endblock body_post %}

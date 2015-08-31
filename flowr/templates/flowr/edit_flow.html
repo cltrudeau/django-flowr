@@ -1,11 +1,50 @@
-{% extends "flowr/view_rules.html" %}
+{% extends "flowr/base.html" %}
+{% load staticfiles %}
 
-{% block functions %}
-{% endblock functions %}
+{% block extra_head %}
+  <script src="{% static 'flowr/js/w2ui-1.4.3.min.js' %}"></script>
 
-{% block docready %}
-cy.on('tap', 'node', function(e) {
-  console.log('tapped:' + e.cyTarget.id());
+  <link rel="stylesheet" type="text/css" 
+    href="{% static 'flowr/js/w2ui-1.4.3.min.css' %}"/>
+{% endblock extra_head %}
+
+{% block body %}
+  {% include "flowr/header.html" %}
+
+  <div id="layout-panels"></div>
+{% endblock body %}
+
+{% block body_post %}
+<script type="text/javascript">
+$(function() {
+  var h = $(window).height();
+  h -= $('#header').height() + 20;
+  $('#layout-panels').height(h);
+
+  $('#layout-panels').w2layout({
+    name:'layout',
+    panels:[
+      { 
+        type:'main',
+        size:'50%',
+        content:'<div id="cy" style="height:500px"></div>',
+      },
+      {
+        type:'right',
+        size:'50%',
+        resizable: true,
+        content:'<div id="rhs"><h1>RHS</h1><div id="display"></div></div>',
+      }
+    ]
+  });
 });
 
-{% endblock docready %}
+  {% include "flowr/graph.js" %}
+
+$(function() {
+  cy.on('tap', 'node', function(event) {
+    $('#display').prepend('tapped:' + event.cyTarget.id() + '<br/>');
+  });
+});
+</script>
+{% endblock body_post %}

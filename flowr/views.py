@@ -18,8 +18,12 @@ def view_rule_set_tree(request, rule_set_id):
     data = {
         'title':'View: %s' % rule_set.name,
         'graph':rule_set.cytoscape_json(),
-        'root':rule_set.name,
+        'roots':json.dumps([rule_set.root_rule_name, ] ),
+        'return_url': request.META['HTTP_REFERER'],
     }
+
+    t = json.loads(data['graph'])
+    print(json.dumps(t, sort_keys=True, indent=4, separators=(',', ': ')))
 
     return render_to_response('flowr/view_rules.html', data,
         context_instance=RequestContext(request))
@@ -35,15 +39,14 @@ def create_flow(request, rule_set_id):
 @staff_member_required
 def edit_flow(request, flow_id):
     flow = get_object_or_404(Flow, id=flow_id)
-    roots = []
-    if flow.start_node:
-        roots = [flow.start_node.rule_store.name]
 
+    extra_fields = lambda n: {'label':n.data.rule_name}
     data = {
         'flow':flow,
         'title':'Edit: %s' % flow.name,
-        'graph':flow.cytoscape_json(),
-        'roots':roots,
+        'graph':flow.state_graph.cytoscape_json(extra_fields),
+        'roots':json.dumps(['n%s' % flow.state_graph.root.id, ] ),
+        'return_url': request.META['HTTP_REFERER'],
     }
 
     return render_to_response('flowr/edit_flow.html', data,

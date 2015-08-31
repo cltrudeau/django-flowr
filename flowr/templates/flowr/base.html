@@ -1,0 +1,21 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="{% static 'flowr/js/jquery-1.11.3.min.js' %}"></script>
+  <script src="{% static 'flowr/js/cytoscape.min.js' %}"></script>
+
+  <link rel="stylesheet" type="text/css" 
+    href="{% static 'flowr/css/flowr.css' %}"/>
+
+  {% block extra_head %}
+  {% endblock extra_head %}
+</head>
+<body>
+  {% block body %}
+  {% endblock body %}
+
+  {% block body_post %}
+  {% endblock body_post %}
+</body>
+</html>

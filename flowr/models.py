@@ -126,7 +126,7 @@ class DCCGraph(models.Model):
         for node in Node.objects.filter(graph=self):
             node_data = {
                 'data':{ 
-                    'id':node.id,
+                    'id':'n%s' % node.id,
                 }
             }
             for key, value in extra_fields(node).items():
@@ -137,9 +137,9 @@ class DCCGraph(models.Model):
             for child in node.children.all():
                 data['edges'].append({ 
                     'data':{ 
-                        'id':'%s_%s' % (node.id, child.id),
-                        'source':node.id,
-                        'target':child.id,
+                        'id':'e%s_%s' % (node.id, child.id),
+                        'source':'n%s' % node.id,
+                        'target':'n%s' % child.id,
                     }
                 })
 
@@ -430,6 +430,7 @@ class _MetaRule(type):
     def __new__(cls, name, bases, classdict):
         klass = type.__new__(cls, name, bases, dict(classdict))
         klass.class_label = '%s.%s' % (klass.__module__, klass.__name__)
+        klass.name = klass.__name__
         return klass
 
 class Rule(metaclass=_MetaRule):
@@ -480,6 +481,42 @@ class RuleSet(TimeTrackedModel):
         return RuleSet.objects.create(name=name,
             root_rule_label=root_rule.class_label)
 
+
+    def _depth_cyto_traverse(self, rule, nodes, edges, visited):
+        if rule not in visited:
+            visited.add(rule)
+
+            nodes.append({
+                'data':{ 
+                    'id':rule.name,
+                    'label':rule.name,
+                }
+            })
+
+            for child in rule.children:
+                edges.append({ 
+                    'data':{ 
+                        'id':'%s_%s' % (rule.name, child.name),
+                        'source':rule.name,
+                        'target':child.name,
+                    }
+                })
+                self._depth_cyto_traverse(child, nodes, edges, visited)
+
+    def cytoscape_json(self, extra_fields=lambda x:{}):
+        nodes = []
+        edges = []
+        visited = set([])
+
+        self._depth_cyto_traverse(self.root_rule, nodes, edges, visited)
+
+        data = {
+            'nodes':nodes,
+            'edges':edges,
+        }
+
+        return json.dumps(data)
+
 # ============================================================================
 # Flow Models
 # ============================================================================
@@ -517,18 +554,11 @@ class FlowNodeData(TimeTrackedModel, BaseNodeData):
     def __str__(self):
         return 'FlowNodeData(id=%s, %s)' % (self.id, self.rule_label)
 
-    def add_child_rule(self, child_rule):
-        """Add a child path in the :class:`Flow` graph using the given 
-        :class:`Rule` subclass.  This will create a new child :class:`Node` in
-        the associated :class:`Flow` object's state graph with a new
-        :class:`FlowNodeData` instance attached.
-        
-        The :class:`Rule` must be allowed at this stage of the flow according
-        to the hierarchy of rules.
+    def _child_allowed(self, child_rule):
+        """Called to verify that the given rule can become a child of the
+        current node.  
 
-        :param child_rule: :class:`Rule` class to add to the flow as a child of 
-            :class:`Node` that this object owns
-        :returns: FlowNodeData that was added
+        :raises AttributeError: if the child is not allowed
         """
         num_kids = self.node.children.count()
         num_kids_allowed = len(self.rule.children)
@@ -549,9 +579,32 @@ class FlowNodeData(TimeTrackedModel, BaseNodeData):
             raise AttributeError('Rule %s is not a valid child of Rule %s' % (
                 child_rule.__name__, self.rule_name))
 
-        # got here: everything is good, add the child
+    def add_child_rule(self, child_rule):
+        """Add a child path in the :class:`Flow` graph using the given 
+        :class:`Rule` subclass.  This will create a new child :class:`Node` in
+        the associated :class:`Flow` object's state graph with a new
+        :class:`FlowNodeData` instance attached.
+        
+        The :class:`Rule` must be allowed at this stage of the flow according
+        to the hierarchy of rules.
+
+        :param child_rule: :class:`Rule` class to add to the flow as a child of 
+            :class:`Node` that this object owns
+        :returns: ``FlowNodeData`` that was added
+        """
+        self._child_allowed(child_rule)
         child_node = self.node.add_child(rule_label=child_rule.class_label)
         return child_node.data
+
+    def connect_child(self, child_node):
+        """Adds a connection to an existing rule in the :class`Flow` graph.
+        The given :class`Rule` subclass must be allowed to be connected at
+        this stage of the flow according to the hierarchy of rules.
+
+        :param child_node: ``FlowNodeData`` to attach as a child
+        """
+        self._child_allowed(child_node.rule)
+        self.node.connect_child(child_node.node)
 
 
 class Flow(TimeTrackedModel):

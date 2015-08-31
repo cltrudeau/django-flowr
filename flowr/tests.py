@@ -206,7 +206,7 @@ class GraphTests(TestCase):
         for node in [a,b,c,d,e,f,g,h,i]:
             expected = {
                 'data':{
-                    'id':node.id,
+                    'id':'n%s' % node.id,
                     'name':node.data.name,
                 }
             }
@@ -217,9 +217,9 @@ class GraphTests(TestCase):
         for edge in expected_edges:
             expected = {
                 'data' : { 
-                    'id':'%s_%s' % (edge[0].id, edge[1].id), 
-                    'source':edge[0].id, 
-                    'target':edge[1].id,
+                    'id':'e%s_%s' % (edge[0].id, edge[1].id), 
+                    'source':'n%s' % edge[0].id, 
+                    'target':'n%s' % edge[1].id,
                 }
             }
             self.assertIn(expected, edges)
@@ -305,6 +305,35 @@ class FlowTests(TestCase):
         Rule.on_enter(None)
         Rule.on_leave(None)
         str(self.rule_set)
+        rules.A.display_name()
+
+    def test_rule_cytoscape(self):
+        result = json.loads(self.rule_set.cytoscape_json())
+        nodes = result['nodes']
+        edges = result['edges']
+        self.assertEqual(len(nodes), 5)
+        self.assertEqual(len(edges), 5)
+
+        for rule in [rules.A, rules.B, rules.C, rules.D, rules.E]:
+            expected = {
+                'data':{
+                    'id':rule.name,
+                    'label':rule.name,
+                }
+            }
+            self.assertIn(expected, nodes)
+
+        expected_edges = [(rules.A, rules.B), (rules.A, rules.C), 
+            (rules.C, rules.D), (rules.C, rules.E), (rules.E, rules.A)]
+        for edge in expected_edges:
+            expected = {
+                'data' : { 
+                    'id':'%s_%s' % (edge[0].name, edge[1].name), 
+                    'source':edge[0].name, 
+                    'target':edge[1].name,
+                }
+            }
+            self.assertIn(expected, edges)
 
     def test_flow1(self):
         """Tests a simple flow:
@@ -370,7 +399,7 @@ class FlowTests(TestCase):
             node.add_child_rule(rules.D)
 
         node = node.add_child_rule(rules.E)
-        node.add_child_rule(rules.A)
+        node.connect_child(root)
 
         # -- start testing the flow
         rules.done_enter = []
@@ -402,3 +431,5 @@ class FlowTests(TestCase):
 
         self.assertEqual(Flow.objects.count(), 0)
         self.assertEqual(DCCGraph.objects.count(), 0)
+
+
