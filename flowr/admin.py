@@ -24,6 +24,7 @@ class DCCGraphAdmin(admin.ModelAdmin):
 
     def self_root(self, obj):
         return '%s' % obj.root
+    self_root.short_description = 'Root'
 
     def self_num_nodes(self, obj):
         return Node.objects.filter(graph=obj).count()
@@ -39,21 +40,25 @@ class DCCGraphAdmin(admin.ModelAdmin):
 @admin.register(Node)
 class NodeAdmin(admin.ModelAdmin):
     list_display = ('id', 'self_graph', 'self_parents', 'self_children', 
-        'self_is_root')
+        'self_is_root', 'data')
 
     def self_graph(self, obj):
         return '%s' % obj.graph
+    self_graph.short_description = 'DCC Graph'
 
     def self_parents(self, obj):
         parents = [str(p) for p in obj.parents.all()]
         return ', '.join(parents)
+    self_parents.short_description = 'Parents'
 
     def self_children(self, obj):
         children = [str(c) for c in obj.children.all()]
         return ','.join(children)
+    self_children.short_description = 'Children'
 
     def self_is_root(self, obj):
         return obj.is_root()
+    self_is_root.short_description = 'Is Root'
 
 # =============================================================================
 # Flow Admin Classes
@@ -97,11 +102,16 @@ class FlowAdmin(admin.ModelAdmin):
 
 @admin.register(FlowNodeData)
 class FlowNodeDataAdmin(admin.ModelAdmin):
-    list_display = ('id', 'rule_label', 'flow', 'self_children')
+    list_display = ('id', 'rule_label', 'self_flow', 'self_children')
 
     def self_children(self, obj):
         kids = [str(node.data.rule_name) for node in obj.node.children.all()]
         return ', '.join(kids)
+
+    def self_flow(self, obj):
+        # django admin only detects declared items, this value is set in
+        # __init__ so it needs a helper function
+        return str(obj.flow)
 
 
 @admin.register(State)

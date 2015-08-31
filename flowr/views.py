@@ -6,22 +6,19 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
 
-from flowr.models import RuleStoreSet, RuleStore, Flow
+from flowr.models import RuleSet, Flow
 
 logger = logging.getLogger(__name__)
 
 # ============================================================================
 
 @staff_member_required
-def view_rule_store_set_tree(request, rule_store_set_id):
-    rule_store_set = get_object_or_404(RuleStoreSet, id=rule_store_set_id)
+def view_rule_set_tree(request, rule_set_id):
+    rule_set = get_object_or_404(RuleSet, id=rule_set_id)
     data = {
-        'title':'View: %s' % rule_store_set.name,
-        'graph':rule_store_set.cytoscape_json(),
-        'roots':json.dumps([rs.name for rs in \
-            RuleStore.objects.filter(rule_store_set=rule_store_set,
-                starting=True)
-            ]),
+        'title':'View: %s' % rule_set.name,
+        'graph':rule_set.cytoscape_json(),
+        'root':rule_set.name,
     }
 
     return render_to_response('flowr/view_rules.html', data,
@@ -29,9 +26,9 @@ def view_rule_store_set_tree(request, rule_store_set_id):
 
 
 @staff_member_required
-def create_flow(request, rule_store_set_id):
-    rule_store_set = get_object_or_404(RuleStoreSet, id=rule_store_set_id)
-    flow = Flow.objects.create(name='New Flow', rule_store_set=rule_store_set)
+def create_flow(request, rule_set_id):
+    rule_set = get_object_or_404(RuleSet, id=rule_set_id)
+    flow = Flow.factory('New Flow', rule_set)
     return edit_flow(request, flow.id)
 
 

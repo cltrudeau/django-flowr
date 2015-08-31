@@ -27,6 +27,9 @@ class DCCGraph(models.Model):
     data_content_type = models.ForeignKey(ContentType)
     root = models.ForeignKey('flowr.Node', blank=True, null=True)
 
+    class Meta:
+        verbose_name = 'DCC Graph'
+
     def __str__(self):
         return 'DCCGraph(id=%s)' % self.id
 
@@ -451,6 +454,9 @@ class RuleSet(TimeTrackedModel):
     name = models.CharField(max_length=80)
     root_rule_label = models.CharField(max_length=80)
 
+    class Meta:
+        verbose_name = 'Rule Set'
+
     def __init__(self, *args, **kwargs):
         super(RuleSet, self).__init__(*args, **kwargs)
 
@@ -480,6 +486,10 @@ class RuleSet(TimeTrackedModel):
 
 class FlowNodeData(TimeTrackedModel, BaseNodeData):
     rule_label = models.CharField(max_length=80)
+
+    class Meta:
+        verbose_name = 'Flow Node Data'
+        verbose_name_plural = 'Flow Node Data'
 
     def __init__(self, *args, **kwargs):
         super(FlowNodeData, self).__init__(*args, **kwargs)
