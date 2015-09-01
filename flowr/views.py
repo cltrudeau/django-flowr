@@ -5,11 +5,14 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
+from django.template.loader import render_to_string
 
-from flowr.models import RuleSet, Flow
+from flowr.models import RuleSet, Flow, Node
 
 logger = logging.getLogger(__name__)
 
+# ============================================================================
+# Flow/Rule Management
 # ============================================================================
 
 @staff_member_required
@@ -51,3 +54,44 @@ def edit_flow(request, flow_id):
 
     return render_to_response('flowr/edit_flow.html', data,
         context_instance=RequestContext(request))
+
+# ============================================================================
+# Node Control
+# ============================================================================
+
+@staff_member_required
+def node_selected(request, node_id):
+    node = get_object_or_404(Node, id=node_id)
+    data = {
+        'node':node,
+    }
+
+    result = {
+        'html':render_to_string('flowr/node_selected.html', data,
+            context_instance=RequestContext(request)),
+        'prune': ','.join(['#n%s' % n.id for n in node.prune_list()])
+    }
+
+    return JsonResponse(result)
+
+
+@staff_member_required
+def node_remove(request, node_id):
+    node = get_object_or_404(Node, id=node_id)
+    result = {
+        'selector':'#n%s' % node.id,
+    }
+    node.remove()
+
+    return JsonResponse(result)
+
+
+@staff_member_required
+def node_prune(request, node_id):
+    node = get_object_or_404(Node, id=node_id)
+    result = {
+        'selector':','.join(['#n%s' % n.id for n in node.prune_list()]),
+    }
+    node.prune()
+
+    return JsonResponse(result)

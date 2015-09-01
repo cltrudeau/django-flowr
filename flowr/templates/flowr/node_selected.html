@@ -1,0 +1,85 @@
+<h1>{{node.data.rule_name}}</h1>
+
+<div class="row">
+  <div class="col-md-12">
+    {% if node.can_remove %}
+      <a id="remove-confirm" class="btn btn-primary" role="button" 
+          data-toggle="collapse" href="#confirm-collapse" aria-expanded="false" 
+          aria-controls="confirm-collapse">
+        Remove {{node.data.rule_name}}
+      </a>
+    {% endif %}
+    <a id="prune-confirm" class="btn btn-primary" role="button" 
+        data-toggle="collapse" href="#confirm-collapse" aria-expanded="false" 
+        aria-controls="confirm-collapse">
+      Prune {{node.data.rule_name}}
+    </a>
+    <div class="collapse well" id="confirm-collapse">
+      <p>
+        Are you sure you want to remove the highlighted elements?
+      </p>
+      <a id="remove-list" class="btn btn-danger" role="button" 
+          href="javascript:void(0);">
+      </a>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+var remove_mode;
+
+$(function() {
+  $('#remove-confirm').click(function(event) {
+    remove_mode = 'remove';
+    if( $('#remove-list').is(':hidden') ) {
+      // showing panel
+      $('#remove-list').text('Remove');
+
+      cy.$('#' + node_selected.id() ).addClass('highlight');
+    }
+    else {
+      // hiding panel
+      clear_highlights();
+    }
+  });
+  $('#prune-confirm').click(function(event) {
+    remove_mode = 'prune';
+    if( $('#remove-list').is(':hidden') ) {
+      // showing panel
+      $('#remove-list').text('Prune');
+      cy.$(prune_select).addClass('highlight');
+    }
+    else {
+      // hiding panel
+      clear_highlights();
+    }
+  });
+
+  $('#remove-list').click(function(event) {
+    $('body').css('cursor', 'wait');
+    var url;
+    if( remove_mode == 'remove' ) {
+      url = "/flowr/node_remove/" + node_selected.id() + "/";
+      
+    }
+    else {
+      // prune mode
+      url = "/flowr/node_prune/" + node_selected.id() + "/";
+    }
+
+    $.ajax({
+      url:url,
+      success: function(data) {
+        cy.$(data['selector']).remove();
+        node_selected = '';
+        prune_select = [];
+        $('#rhs').html('');
+      },
+      error: show_error,
+      complete: function() {
+        $('body').css('cursor', 'auto');
+      },
+    });
+  });
+});
+</script>

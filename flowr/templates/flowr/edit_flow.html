@@ -16,6 +16,22 @@
 
 {% block body_post %}
 <script type="text/javascript">
+var node_selected;
+var prune_select;
+
+function clear_highlights() {
+  cy.nodes().removeClass('highlight');
+}
+
+function show_error() {
+  $('#rhs').html(
+    '<h1>Error</h1>' + 
+    '<p>' +
+    '  An error has occurred communicating with the server' + 
+    '</p>'
+  );
+}
+
 $(function() {
   var h = $(window).height();
   console.debug('window h:' + h + ' header h:' + $('#header').height());
@@ -35,7 +51,7 @@ $(function() {
         type:'right',
         size:'50%',
         resizable: true,
-        content:'<div id="rhs"><h1>RHS</h1><div id="display"></div></div>',
+        content:'<div id="rhs"></div>',
       }
     ],
     onResize: function(event) {
@@ -55,7 +71,21 @@ $(function() {
 
 $(function() {
   cy.on('tap', 'node', function(event) {
-    $('#display').prepend('tapped:' + event.cyTarget.id() + '<br/>');
+    clear_highlights();
+    $('body').css('cursor', 'wait');
+    $.ajax({
+      url:"/flowr/node_selected/" + event.cyTarget.id() + "/",
+      success: function(data) {
+        node_selected = event.cyTarget;
+        prune_select = data['prune'];
+        $('#rhs').html(data['html']);
+      },
+      error: show_error,
+      complete: function() {
+        $('body').css('cursor', 'auto');
+      },
+    });
+
   });
 });
 </script>

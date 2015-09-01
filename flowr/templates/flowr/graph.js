@@ -32,7 +32,14 @@ $(function() {
         css: {
           'target-arrow-shape': 'triangle'
         }
-      }
+      },
+      {
+        selector: '.highlight',
+        css: {
+            'border-color':'red',
+            'border-width':4,
+        }
+      },
     ],
     elements: {{ graph | safe }},
     layout: layout, 
