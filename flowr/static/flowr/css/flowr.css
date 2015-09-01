@@ -13,9 +13,19 @@
 }
 
 #rhs {
-    margin:5px;
+    margin-top:0;
+    margin-left:10px;
+    margin-right:10px;
 }
 
 #confirm-collapse {
     margin-top:3px;
+}
+
+#action-pane {
+    margin-top:15px;
+}
+
+#custom-select-pane {
+    margin-top:15px;
 }

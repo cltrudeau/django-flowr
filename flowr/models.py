@@ -6,6 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
+from django.http import JsonResponse
 
 logger = logging.getLogger(__name__)
 
@@ -448,16 +449,46 @@ class _MetaRule(type):
         return klass
 
 class Rule(metaclass=_MetaRule):
+    """Subclasses of ``Rule`` are associated with states in the flow graph.
+    As states are entered and exited, the :func:`Rule.on_enter` and 
+    :func:`Rule.on_leave` methods are called respectively.
+
+    :param children: list of other subclasses of ``Rule`` that
+        are allowed as children of this node in the flow.  Cycles are allowed
+        even with the ``Rule`` being its own child.
+    :param multiple_paths: ``True`` if the exit of this state can have
+        multiple choices.  Multiple children mean you can construct different
+        exits in the flow, multiple paths mean there is a branching choice in
+        the flow that can go down the path of more than one of the children.
+        Defaults to ``False``.
+    :param has_edit_screen: ``True`` if the GUI should show an edit screen
+        when a node for this ``Rule`` is selected.   If ``True``, the
+        :func:`Rule.edit_screen` method will be called when the user clicks on
+        an associated node.  Defaults to ``False``.
+    """
     children = []
     multiple_paths = False
+    has_edit_screen = False
 
     @classmethod
     def on_enter(cls, state):
+        """Called when a state corresponding to this ``Rule`` is entered."""
         pass
 
     @classmethod
     def on_leave(cls, state):
+        """Called when a state corresponding to this ``Rule`` is left."""
         pass
+
+    @classmethod
+    def edit_screen(cls, request, flow_node_data):
+        """Called if ``Rule.has_edit_screen`` is ``True`` and the user clicks
+        on a flow node associated with this ``Rule`.  
+
+        :returns: implementation should return the HTML to display when the
+            user selects this node on the edit screen.
+        """
+        raise NotImplementedError()
 
 
 class RuleSet(TimeTrackedModel):

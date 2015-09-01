@@ -1,6 +1,6 @@
 <h1>{{node.data.rule_name}}</h1>
 
-<div class="row">
+<div id="action-pane" class="row">
   <div class="col-md-12">
     {% if node.can_remove %}
       <a id="remove-confirm" class="btn btn-primary" role="button" 
@@ -24,6 +24,14 @@
     </div>
   </div>
 </div>
+
+{% if edit_screen %}
+<div id="custom-select-pane" class="row">
+  <div class="col-md-12">
+    {{edit_screen}}
+  </div>
+</div>
+{% endif %}
 
 <script type="text/javascript">
 var remove_mode;

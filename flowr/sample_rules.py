@@ -38,6 +38,11 @@ class D(LocalRule):
 class C(LocalRule):
     children = [D, E]
     multiple_paths = True
+    has_edit_screen = True
+
+    @classmethod
+    def edit_screen(cls, request, flow_node_data):
+        return 'Custom HTML for node: %s' % flow_node_data
 
 class B(LocalRule):
     children = []

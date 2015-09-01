@@ -61,15 +61,19 @@ def edit_flow(request, flow_id):
 
 @staff_member_required
 def node_selected(request, node_id):
+    print('got here')
     node = get_object_or_404(Node, id=node_id)
     data = {
         'node':node,
     }
 
+    if node.data.rule.has_edit_screen:
+        data['edit_screen'] = node.data.rule.edit_screen(request, node.data)
+
     result = {
         'html':render_to_string('flowr/node_selected.html', data,
             context_instance=RequestContext(request)),
-        'prune': ','.join(['#n%s' % n.id for n in node.prune_list()])
+        'prune': ','.join(['#n%s' % n.id for n in node.prune_list()]),
     }
 
     return JsonResponse(result)
