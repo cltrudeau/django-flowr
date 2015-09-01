@@ -1,5 +1,6 @@
 #header {
   width:50%;
+  overflow: hidden;
 }
 
 #title h1 {

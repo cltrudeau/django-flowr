@@ -1,10 +1,17 @@
 var cy;
+var layout = {
+  name: 'breadthfirst',
+  directed: true,
+  roots: {{ roots | safe}},
+  padding: 5
+}
 
 function updateBounds() {
   var bounds = cy.elements().boundingBox();
   $('#cy').css('height', bounds.h + 300);
   cy.center();
   cy.resize();
+  cy.elements().layout(layout);
 }
 
 $(function() {
@@ -28,12 +35,7 @@ $(function() {
       }
     ],
     elements: {{ graph | safe }},
-    layout: {
-      name: 'breadthfirst',
-      directed: true,
-      roots: {{ roots | safe}},
-      padding: 5
-    }
+    layout: layout, 
   });
 
   $(window).resize(function() {

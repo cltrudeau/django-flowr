@@ -18,7 +18,9 @@
 <script type="text/javascript">
 $(function() {
   var h = $(window).height();
+  console.debug('window h:' + h + ' header h:' + $('#header').height());
   h -= $('#header').height() + 20;
+  console.debug('calced h:' + h);
   $('#layout-panels').height(h);
 
   $('#layout-panels').w2layout({
@@ -35,7 +37,17 @@ $(function() {
         resizable: true,
         content:'<div id="rhs"><h1>RHS</h1><div id="display"></div></div>',
       }
-    ]
+    ],
+    onResize: function(event) {
+      event.onComplete = function() {
+        if( typeof cy !== 'undefined' ) {
+          var container = $('#cy').parent().parent();
+          console.log('container w:' + container.width());
+          $('#cy').css('width', container.width());
+          updateBounds();
+        }
+      }
+    },
   });
 });
 
