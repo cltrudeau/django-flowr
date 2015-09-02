@@ -1,5 +1,5 @@
 django-flowr
 ************
 
-.. include EMBED.rst
+.. include:: EMBED.rst
 
