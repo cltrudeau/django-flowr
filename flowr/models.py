@@ -1,12 +1,10 @@
 # flowr.models.py
 import logging, json
 
-from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
-from django.http import JsonResponse
 
 logger = logging.getLogger(__name__)
 
@@ -37,17 +35,19 @@ class DCCGraph(models.Model):
     @classmethod
     @transaction.atomic
     def factory(cls, data_class, **kwargs):
-        """Creates a ``DCCGraph``, a root :class:`Node: and the node's
+        """Creates a ``DCCGraph``, a root :class:`Node`: and the node's
         associated data class instance.  This factory is used to get around
         the chicken-and-egg problem of the ``DCCGraph`` and ``Nodes`` within
         it having pointers to each other.
 
-        :param data_class: django model class that extends
-            :class:`BaseNodeData` and is used to associate information with
-            the nodes in this graph
-        :param **kwargs: arguments to pass to constructor of the data class
-            instance that is to be created for the root node
-        :returns: instance of the newly created ``DCCGraph``
+        :param data_class: 
+            django model class that extends :class:`BaseNodeData` and is used
+            to associate information with the nodes in this graph
+        :param kwargs: 
+            arguments to pass to constructor of the data class instance that
+            is to be created for the root node
+        :returns: 
+            instance of the newly created ``DCCGraph``
         """
         if not issubclass(data_class, BaseNodeData):
             raise AttributeError('data_class must be a BaseNodeData extender')
@@ -78,6 +78,7 @@ class DCCGraph(models.Model):
         the list of children.
 
         Example::
+
             DCCGraph.factory_from_graph(Label, 
                 {'name':'A'}, [
                     ({'name':'B', []),
@@ -85,17 +86,21 @@ class DCCGraph(models.Model):
                 ])
 
         creates the graph::
+
                  A
                 / \
                B   C
 
-        :param data_class: django model class that extends
-            :class:`BaseNodeData` and is used to associate information with
-            the Nodes in this graph
-        :param root_args: dictionary of arguments to pass to constructor of
-            the data class instance that is to be created for the root node
-        :param children: iterable with a list of dictionary and iterable pairs
-        :returns: instance of the newly created ``DCCGraph``
+        :param data_class: 
+            django model class that extends :class:`BaseNodeData` and is used
+            to associate information with the Nodes in this graph
+        :param root_args: 
+            dictionary of arguments to pass to constructor of the data class
+            instance that is to be created for the root node
+        :param children: 
+            iterable with a list of dictionary and iterable pairs
+        :returns: 
+            instance of the newly created ``DCCGraph``
         """
         graph = cls.factory(data_class, **root_args)
         for child in children:
@@ -105,12 +110,15 @@ class DCCGraph(models.Model):
 
     def find_nodes(self, **kwargs):
         """Searches the data nodes that are associated with this graph using
-        the key word arguments as a filter and returns a ``QuerySet`` of the
-        attached :class:`Node` objects.
+        the key word arguments as a filter and returns a
+        :class:`django.db.models.query.QuerySet`` of the attached
+        :class:`Node` objects.
 
-        :param **kwargs: filter arguments applied to searching the
-            :class:`BaseNodeData` subclass associated with this graph.
-        :returns: ``QuerySet`` of :class:`Node` objects 
+        :param kwargs: 
+            filter arguments applied to searching the :class:`BaseNodeData`
+            subclass associated with this graph.
+        :returns: 
+            ``QuerySet`` of :class:`Node` objects 
         """
         filter_args = {}
         classname = self.data_content_type.model_class().__name__.lower()
@@ -180,9 +188,11 @@ class Node(models.Model):
         """Creates a new ``Node`` based on the extending class and adds it as
         a child to this ``Node``.
 
-        :param **kwargs: arguments for constructing the data object associated
-            with this ``Node``
-        :returns: extender of the ``Node`` class
+        :param kwargs: 
+            arguments for constructing the data object associated with this
+            ``Node``
+        :returns: 
+            extender of the ``Node`` class
         """
         data_class = self.graph.data_content_type.model_class()
         node = Node.objects.create(graph=self.graph)
@@ -195,7 +205,8 @@ class Node(models.Model):
         """Adds the given node as a child to this one.  No new nodes are
         created, only connections are made.
         
-        :param node: a ``Node`` object to connect
+        :param node:
+            a ``Node`` object to connect
         """
         if node.graph != self.graph:
             raise AttributeError('cannot connect nodes from different graphs')
@@ -293,9 +304,11 @@ class Node(models.Model):
         associated data object.  See :func:`Node.can_remove` for limitations
         on what can be deleted.
 
-        :returns: :class:`BaseNodeData` subclass associated with the deleted
-            Node
-        :raises: AttributeError if called on a Node that cannot be deleted
+        :returns: 
+            :class:`BaseNodeData` subclass associated with the deleted Node
+
+        :raises AttributeError:
+           if called on a ``Node`` that cannot be deleted
         """
         if not self.can_remove():
             raise AttributeError('this node cannot be deleted')
@@ -309,8 +322,9 @@ class Node(models.Model):
         """Removes the node and all descendents without looping back past the
         root.  Note this does not remove the associated data objects.
 
-        :returns: list of :class:`BaseDataNode` subclassers associated with
-        the removed Nodes.
+        :returns:
+            list of :class:`BaseDataNode` subclassers associated with the
+            removed ``Node`` objects.
         """
         targets = self.descendents_root()
         try:
@@ -346,88 +360,6 @@ class Node(models.Model):
 
 # ============================================================================
 
-"""
-Flowr Rule System
-=================
-
-Most state machine libraries are "static" and require the flow in the state
-machine to be definied programmatically.  Flowr is designed so that you can
-build state machine flows and store them in a database.  There are two key
-concepts: rule graphs and state machines.  The programmer defines one or more
-sets of rules that describe the allowed flow between states, the user can then
-use the GUI tools to construct state machines that follow these rules and
-store the machines in the database.  The state machines can then be
-instantiated for processing the flow which triggers call-back mechanisms in
-the rule objects on entering and leaving a state.
-
-Rules are defined by subclassing the :class:`Rule` class and filling in the
-"children" attribute.  Cycles are allowed, so :class:`Rule` instances can
-point to each other or themselves.  Once a hierarchy of :class:`Rule` classes
-have been defined, a :class:`RuleSet` can be created and stored in the
-database.  :class:`Flow` objects are created with the GUI and describe the
-flow through a state machine with the state flow graph being a subset of those
-defined by the collection of :class:`Rule` objects that were registered in the
-:class:`RuleSet` instance.
-
-The :class:`State` object is an instantiation of a traversal of the state
-machine represented by a :class:`Flow`.  Once there are :class:`State` objects
-for a :class:`Flow`, the :class:`Flow` can no longer be edited.
-
-Definitions:
-
-* :class:`Rule` -- a base class for rules that the programmer defines which 
-    specifies what other Rule objects can be connected to and what happens
-    when a state is entered and exited
-* :class:`RuleSet` -- a registery for the collections of Rule subclasses 
-* :class:`Flow` -- user defined state machine based on a :class:`RuleSet` 
-    instance
-* :class:`State` -- an instance of a state machine and its current state
-
-Example
--------
-
-A user defines the following Rule classes::
-
-    class A(Rule):
-        children = [B, C]
-
-    class B(Rule):
-        children = []
-
-    class C(Rule):
-        children = [D, E]
-        multiple_paths = True
-
-    class D(Rule):
-        children = []
-
-    class E(Rule):
-        children = []
-
-
-A :class:`RuleSet` object is created using the factory and passing in the
-single starting point of our allowed flows::
-
-    RuleSet.factory('My Rules', A)
-
-Using these rules, you could create some flows:
-
-* A -> B
-* A -> C -> D
-* A -> C -> D or E
-
-You would not be able to create:
-
-* A -> D
-* A -> B -> C
-
-The first of these is not allowed because "D" is not a direct child of "A" in
-the Rule definitions.  The second is not allowed because "B" has no allowed
-children.
-"""
-
-# ============================================================================
-
 class TimeTrackedModel(models.Model):
     """Abstract model for create & update fields.  """
 
@@ -453,18 +385,23 @@ class Rule(metaclass=_MetaRule):
     As states are entered and exited, the :func:`Rule.on_enter` and 
     :func:`Rule.on_leave` methods are called respectively.
 
-    :param children: list of other subclasses of ``Rule`` that
-        are allowed as children of this node in the flow.  Cycles are allowed
-        even with the ``Rule`` being its own child.
-    :param multiple_paths: ``True`` if the exit of this state can have
-        multiple choices.  Multiple children mean you can construct different
-        exits in the flow, multiple paths mean there is a branching choice in
-        the flow that can go down the path of more than one of the children.
+    :param children: 
+        list of other subclasses of ``Rule`` that are allowed as children of
+        this node in the flow.  Cycles are allowed even with the ``Rule``
+        being its own child.
+
+    :param multiple_paths: 
+        ``True`` if the exit of this state can have multiple choices.
+        Multiple children mean you can construct different exits in the flow,
+        multiple paths mean there is a branching choice in the flow that can
+        go down the path of more than one of the children.  Defaults to
+        ``False``.
+
+    :param has_edit_screen: 
+        ``True`` if the GUI should show an edit screen when a node for this
+        ``Rule`` is selected.   If ``True``, the :func:`Rule.edit_screen`
+        method will be called when the user clicks on an associated node.
         Defaults to ``False``.
-    :param has_edit_screen: ``True`` if the GUI should show an edit screen
-        when a node for this ``Rule`` is selected.   If ``True``, the
-        :func:`Rule.edit_screen` method will be called when the user clicks on
-        an associated node.  Defaults to ``False``.
     """
     children = []
     multiple_paths = False
@@ -483,10 +420,11 @@ class Rule(metaclass=_MetaRule):
     @classmethod
     def edit_screen(cls, request, flow_node_data):
         """Called if ``Rule.has_edit_screen`` is ``True`` and the user clicks
-        on a flow node associated with this ``Rule`.  
+        on a flow node associated with this ``Rule``.
 
-        :returns: implementation should return the HTML to display when the
-            user selects this node on the edit screen.
+        :returns: 
+            implementation should return the HTML to display when the user
+            selects this node on the edit screen.
         """
         raise NotImplementedError()
 
@@ -603,7 +541,8 @@ class FlowNodeData(TimeTrackedModel, BaseNodeData):
         """Called to verify that the given rule can become a child of the
         current node.  
 
-        :raises AttributeError: if the child is not allowed
+        :raises AttributeError: 
+            if the child is not allowed
         """
         num_kids = self.node.children.count()
         num_kids_allowed = len(self.rule.children)
@@ -633,9 +572,11 @@ class FlowNodeData(TimeTrackedModel, BaseNodeData):
         The :class:`Rule` must be allowed at this stage of the flow according
         to the hierarchy of rules.
 
-        :param child_rule: :class:`Rule` class to add to the flow as a child of 
-            :class:`Node` that this object owns
-        :returns: ``FlowNodeData`` that was added
+        :param child_rule: 
+            :class:`Rule` class to add to the flow as a child of :class:`Node`
+            that this object owns
+        :returns: 
+            ``FlowNodeData`` that was added
         """
         self._child_allowed(child_rule)
         child_node = self.node.add_child(rule_label=child_rule.class_label)
@@ -646,7 +587,8 @@ class FlowNodeData(TimeTrackedModel, BaseNodeData):
         The given :class`Rule` subclass must be allowed to be connected at
         this stage of the flow according to the hierarchy of rules.
 
-        :param child_node: ``FlowNodeData`` to attach as a child
+        :param child_node: 
+            ``FlowNodeData`` to attach as a child
         """
         self._child_allowed(child_node.rule)
         self.node.connect_child(child_node.node)
@@ -698,8 +640,10 @@ class State(TimeTrackedModel):
         returns a ``State`` object and calls the associated
         :func:`Rule.on_enter` method.
 
-        :param flow: :class:`Flow` which defines this state machine
-        :returns: newly created instance
+        :param flow: 
+            :class:`Flow` which defines this state machine
+        :returns: 
+            newly created instance
         """
         state = State.objects.create(flow=flow, 
             current_node=flow.state_graph.root)
@@ -720,8 +664,9 @@ class State(TimeTrackedModel):
         If there is only one possible path in the flow and a :class:`Rule` is
         given it will be ignored.
 
-        :param rule: if the current :class:`Rule` in the :class:`Flow` is
-            multipath then the next :class:`Rule` in the flow must be provided.
+        :param rule: 
+            if the current :class:`Rule` in the :class:`Flow` is multipath
+            then the next :class:`Rule` in the flow must be provided.
         """
         num_kids = self.current_node.children.count()
         next_node = None
