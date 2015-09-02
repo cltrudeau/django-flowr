@@ -6,7 +6,7 @@ long_description = open(readme).read()
 
 SETUP_ARGS = dict(
     name='django-flowr',
-    version='0.1.1',
+    version='0.1.2',
     description='Django based dynamic state machine system',
     long_description=long_description,
     url='https://github.com/cltrudeau/django-flowr',

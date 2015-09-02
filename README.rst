@@ -15,7 +15,6 @@ the rule objects on entering and leaving a state.
 Installation
 ============
 
-
 Add 'flowr' to your ``settings.INSTALLED_APPS`` field.
 
 Run
