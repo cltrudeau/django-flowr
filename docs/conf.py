@@ -63,9 +63,11 @@ author = 'Christopher Trudeau'
 #
 # The short X.Y version.
 import imp
-mod = imp.load_source('version', '../version.py')
+#mod = imp.load_source('version', '../version.py')
+mod = imp.load_source('flowrsetup', '../setup.py')
 
-version = mod.VERSION
+#version = mod.VERSION
+version = mod.SETUP_ARGS['version']
 # The full version, including alpha/beta/rc tags.
 release = version
 

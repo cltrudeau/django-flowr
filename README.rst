@@ -46,3 +46,8 @@ This will create an ``sqlite`` database with some sample rules.  Point your
 browser at ``http://localhost:8000/admin`` and login with the username
 ``admin`` and the password ``admin``.  Use the django admin screens to view
 the flows and rules in the system.
+
+Docs
+====
+
+Docs available at: https://readthedocs.org/projects/django-flowr/

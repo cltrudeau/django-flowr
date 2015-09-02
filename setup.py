@@ -1,23 +1,14 @@
-from setuptools import setup, find_packages
-from version import VERSION
+import os
 
-setup(
+readme = os.path.join(os.path.dirname(__file__), 'README.rst')
+long_description = open(readme).read()
+
+
+SETUP_ARGS = dict(
     name='django-flowr',
-    version=VERSION,
+    version='0.1.1',
     description='Django based dynamic state machine system',
-    long_description=(
-        'Most state machine libraries are "static" and require the flow '
-        'in the state machine to be definied programmatically.  Flowr '
-        'is designed so that you can build state machine flows and '
-        'store them in a database.  There are two key concepts: rule '
-        'graphs and state machines.  The programmer defines one or more '
-        'sets of rules that describe the allowed flow between states, '
-        'the user can then use the GUI tools to construct state '
-        'machines that follow these rules and store the machines in the '
-        'database.  The state machines can then be instantiated for '
-        'processing the flow which triggers call-back mechanisms in the '
-        'rule objects on entering and leaving a state. '
-    ),
+    long_description=long_description,
     url='https://github.com/cltrudeau/django-flowr',
     author='Christopher Trudeau',
     author_email='ctrudeau+pypi@arsensa.com',
@@ -35,8 +26,13 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     keywords='django,state machine',
-    packages=find_packages(),
     install_requires=[
         'Django>=1.8',
     ],
 )
+
+if __name__ == '__main__':
+    from setuptools import setup, find_packages
+
+    SETUP_ARGS['packages'] = find_packages()
+    setup(**SETUP_ARGS)
