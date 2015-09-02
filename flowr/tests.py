@@ -8,8 +8,8 @@ from flowr import sample_rules as rules
 
 # ============================================================================
 
-def pprint(data):
-    print(json.dumps(data, sort_keys=True, indent=4, separators=(',', ': ')))
+#def pprint(data):
+#    print(json.dumps(data, sort_keys=True, indent=4, separators=(',', ': ')))
 
 # ============================================================================
 # Test Class
@@ -261,7 +261,11 @@ class GraphTests(TestCase):
     def test_prune(self):
         a,b,c,d,e,f,g,h,i = self._c_graph_nodes()
 
-        # simple prune of childless node
+        # -- simple prune of childless node
+        expected = [b, ]
+        result = b.prune_list()
+        self.assertEqual(expected, result)
+
         expected = [b.data, ]
         result = b.prune()
         self.assertEqual(expected, result)
@@ -269,7 +273,11 @@ class GraphTests(TestCase):
         self.assertEqual(a.children.count(), 1)
         self.assertEqual(Node.objects.filter(graph=self.graph_c).count(), 8)
 
-        # more comples prune of node with children and cycles
+        # -- more complex prune of node with children and cycles
+        expected = [d, g, h, i]
+        result = d.prune_list()
+        self.assertEqual(set(expected), set(result))
+
         expected = [d.data, g.data, h.data, i.data]
         result = d.prune()
         self.assertEqual(set(expected), set(result))
@@ -293,6 +301,7 @@ class GraphTests(TestCase):
         # misc items to get full coverage
         str(self.graph_a)
         str(self.graph_a.root)
+        str(self.graph_a.root.data)
 
 # ============================================================================
 
@@ -304,6 +313,9 @@ class FlowTests(TestCase):
         """Miscellaneous stuff to get our coverage to 100%"""
         Rule.on_enter(None)
         Rule.on_leave(None)
+        with self.assertRaises(NotImplementedError):
+            Rule.edit_screen(None, None)
+
         str(self.rule_set)
         rules.A.display_name()
 
@@ -431,5 +443,3 @@ class FlowTests(TestCase):
 
         self.assertEqual(Flow.objects.count(), 0)
         self.assertEqual(DCCGraph.objects.count(), 0)
-
-
