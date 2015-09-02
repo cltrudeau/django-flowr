@@ -5,6 +5,7 @@
 
 .. include:: ../README.rst
 
+Version: |version|
 
 Contents
 ========
@@ -22,4 +23,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
