@@ -19,11 +19,12 @@ settings.configure(DEBUG=True,
         'django.contrib.sessions',
         'django.contrib.admin',
         'flowr',
+        'flowr.tests',
     ),
 )
 
 django.setup()
 runner = DiscoverRunner(verbosity=1)
-failures = runner.run_tests(['flowr'])
+failures = runner.run_tests(['flowr.tests'])
 if failures:
     sys.exit(failures)
