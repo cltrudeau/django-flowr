@@ -1,6 +1,6 @@
 #!/bin/bash
 
-git tag `grep "VERSION" version.py | cut -d "'" -f 2`
+git tag `grep "version" setup.py | cut -d "'" -f 2`
 
 rm -rf build
 rm -rf dist
