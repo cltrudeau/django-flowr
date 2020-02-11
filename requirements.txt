@@ -1,7 +1,7 @@
 # These requirements are for running tests and the sample_site, the library 
 # itself only needs a subset, see setup.py for that list
 coverage==3.7.1
-Django==1.8.3
+Django==1.11.28
 pudb==2015.3
 pyflakes==0.9.2
 Pygments==2.0.2
