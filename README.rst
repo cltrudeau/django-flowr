@@ -1,3 +1,8 @@
+ARCHIVED
+********
+
+This project is no longer activley maintained, feel free to take anything of value you find.
+
 django-flowr
 ************
 
@@ -45,8 +50,3 @@ This will create an ``sqlite`` database with some sample rules.  Point your
 browser at ``http://localhost:8000/admin`` and login with the username
 ``admin`` and the password ``admin``.  Use the django admin screens to view
 the flows and rules in the system.
-
-Docs
-====
-
-Docs available at: http://django-flowr.readthedocs.org/en/latest/
